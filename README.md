@@ -1,1 +1,1 @@
-# oneflow_nlp_mode
+# oneflow_nlp_model
