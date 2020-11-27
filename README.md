@@ -2,8 +2,8 @@
 
 In this repo, we supply several NLP models based on OneFlow, including:
 
-* [TextCNN]
-* [RoBERT]
+* TextCNN
+* RoBERT
 
 
 ## License
