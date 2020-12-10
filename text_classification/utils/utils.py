@@ -1,13 +1,15 @@
-import oneflow.core.record.record_pb2 as ofrecord
+import os
 import struct
+import oneflow.core.record.record_pb2 as ofrecord
 import numpy as np
 import six
 
-def load_imdb_data():
+
+def load_imdb_data(path):
     train_data = []
     train_labels = []
 
-    with open("./imdb_train/part-0", "rb") as f:
+    with open(os.path.join(path, "train-part-0"), "rb") as f:
         for loop in range(0, 25000):
             length = struct.unpack("q", f.read(8))
             serilizedBytes = f.read(length[0])
@@ -18,11 +20,11 @@ def load_imdb_data():
 
             train_data.append(data)
             train_labels.append(*label)
-    
+
     test_data = []
     test_labels = []
 
-    with open("./imdb_test/part-0", "rb") as f:
+    with open(os.path.join(path, "test-part-0"), "rb") as f:
         for loop in range(0, 25000):
             length = struct.unpack("q", f.read(8))
             serilizedBytes = f.read(length[0])
@@ -33,8 +35,9 @@ def load_imdb_data():
 
             test_data.append(data)
             test_labels.append(*label)
-    
+
     return (np.array(train_data), np.array(train_labels)), (np.array(test_data), np.array(test_labels))
+
 
 def pad_sequences(sequences, maxlen=None, dtype='int32',
                   padding='pre', truncating='pre', value=0.):

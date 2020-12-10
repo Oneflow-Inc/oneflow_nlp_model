@@ -1,21 +1,23 @@
 import sys
+import os
+import argparse
+import time
+import json
+from typing import Tuple
+
+import numpy as np
 import oneflow as flow
 import oneflow.typing as tp
-import argparse
-import numpy as np
-import time
-from typing import Tuple
-from tensorflow.keras.datasets import imdb
-from tensorflow.keras.preprocessing.sequence import pad_sequences
 
-sys.path.append('../../')
+sys.path.append("../..")
 from nlp_ops import bilstm
+from text_classification.utils import pad_sequences, load_imdb_data
 
 time_map = {}
 
 
 def _colored_string(string: str, color: str or int) -> str:
-    """在终端中显示一串有颜色的文字 [copied from fitlog]
+    """在终端中显示一串有颜色的文字 [This code is copied from fitlog]
 
     :param string: 在终端中显示的文字
     :param color: 文字的颜色
@@ -53,17 +55,10 @@ class LSTMText:
             initializer=self.initializer,
         )
         data = flow.gather(emb_weight, inputs, axis=0)
-
-        # print(data.shape)  # (batch_size, seq_len, emb_dim)
-
         data = bilstm(data, self.hidden_size)
-
-        # print(data.shape)  # (batch_size, 2)
 
         logits = flow.layers.dense(data, self.n_classes, use_bias=True,
                                    kernel_initializer=self.initializer, name='dense')
-
-        # print(logits.shape)  # (batch_size, 2)
         return logits
 
 
@@ -116,8 +111,7 @@ def eval_job(text: tp.Numpy.Placeholder((args.batch_size, args.sequence_length),
              ) -> Tuple[tp.Numpy, tp.Numpy]:
     with flow.scope.placement("gpu", "0:0"):
         logits = model.get_logits(text, is_train=False)
-        loss = flow.nn.sparse_softmax_cross_entropy_with_logits(label, logits, name="softmax_loss")
-
+        logits = flow.nn.softmax(logits)
     return label, logits
 
 
@@ -143,9 +137,12 @@ def acc(labels, logits, g):
 def train():
     print(_colored_string('Start Loading Data', 'green'))
 
-    (train_data, train_labels), (test_data, test_labels) = imdb.load_data()
+    path = '../imdb'
+    (train_data, train_labels), (test_data, test_labels) = load_imdb_data(path)
 
-    word_index = {k: (v + 2) for k, v in imdb.get_word_index().items()}
+    with open(os.path.join(path, 'word_index.json')) as f:
+        word_index = json.load(f)
+    word_index = {k: (v + 2) for k, v in word_index.items()}
     word_index["<PAD>"] = 0
     word_index["<UNK>"] = 1
 

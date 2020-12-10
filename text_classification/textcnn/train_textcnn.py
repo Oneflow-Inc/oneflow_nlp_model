@@ -1,8 +1,4 @@
-from __future__ import absolute_import, division, print_function
 import sys
-sys.path.append("..")
-from typing import Tuple
-
 import oneflow as flow
 import oneflow.typing as tp
 import argparse
@@ -10,9 +6,12 @@ import numpy as np
 import os
 import shutil
 import json
-import time
+from typing import Tuple
+
 from textcnn import TextCNN
-from utils import pad_sequences, load_imdb_data
+
+sys.path.append("../..")
+from text_classification.utils import pad_sequences, load_imdb_data
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--ksize_list', type=str, default='2,3,4,5')
@@ -51,6 +50,7 @@ def get_eval_config():
     config = flow.function_config()
     config.default_data_type(flow.float)
     return config
+
 
 @flow.global_function('train', get_train_config())
 def train_job(text: tp.Numpy.Placeholder((args.batch_size, args.sequence_length), dtype=flow.int32),
@@ -95,9 +95,10 @@ def acc(labels, logits, g):
 
 
 def train(checkpoint):
-    (train_data, train_labels), (test_data, test_labels) = load_imdb_data()
+    path = '../imdb'
+    (train_data, train_labels), (test_data, test_labels) = load_imdb_data(path)
 
-    with open('./imdb_word_index/imdb_word_index.json') as f:
+    with open(os.path.join(path, 'word_index.json')) as f:
         word_index = json.load(f)
     word_index = {k: (v + 2) for k, v in word_index.items()}
     word_index["<PAD>"] = 0
@@ -121,7 +122,7 @@ def train(checkpoint):
         for i, (images, labels) in enumerate(zip(data, label)):
             labels, logits = eval_job(images, labels)
             acc(labels, logits, g)
-        
+
         accuracy = g["correct"] * 100 / g["total"]
         print("[Epoch:{0:d} ] accuracy: {1:.1f}%".format(epoch, accuracy))
         if accuracy > best_accuracy:
@@ -135,8 +136,9 @@ def train(checkpoint):
                 os.mkdir(args.model_save_dir)
             print("Epoch:{} save best model.".format(best_epoch))
             checkpoint.save(args.model_save_dir)
-    
+
     print("Epoch:{} get best accuracy:{}".format(best_epoch, best_accuracy))
+
 
 if __name__ == '__main__':
     checkpoint = flow.train.CheckPoint()
