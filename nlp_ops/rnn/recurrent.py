@@ -47,6 +47,6 @@ class RNN:
 
 def rnn(inputs, cell, return_sequences=False, return_state=False, **kwargs):
     """
-        与 oneflow 的设计风格进行统一
+        与 OneFlow 的设计风格进行统一
     """
     return RNN(cell, return_sequences=return_sequences, return_state=return_state, **kwargs)(inputs)
