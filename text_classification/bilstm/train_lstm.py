@@ -38,12 +38,13 @@ def _colored_string(string: str, color: str or int) -> str:
 
 
 class LSTMText:
-    def __init__(self, emb_sz, emb_dim, hidden_size, n_classes):
+    def __init__(self, emb_sz, emb_dim, hidden_size, nfc, n_classes):
         self.initializer = flow.random_normal_initializer(stddev=0.1)
         self.emb_sz = emb_sz
         self.emb_dim = emb_dim
         self.n_classes = n_classes
         self.hidden_size = hidden_size
+        self.nfc = nfc
 
     def get_logits(self, inputs, is_train):
         emb_weight = flow.get_variable(
@@ -56,17 +57,19 @@ class LSTMText:
         )
         data = flow.gather(emb_weight, inputs, axis=0)
         data = bilstm(data, self.hidden_size)
-
+        data = flow.layers.dense(data, self.nfc, use_bias=True,
+                                 kernel_initializer=self.initializer, name='dense-1')
         logits = flow.layers.dense(data, self.n_classes, use_bias=True,
-                                   kernel_initializer=self.initializer, name='dense')
+                                   kernel_initializer=self.initializer, name='dense-2')
         return logits
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--emb_dim', type=int, default=100)
 parser.add_argument('--hidden_size', type=int, default=128)
+parser.add_argument('--nfc', type=int, default=128)
 parser.add_argument('--lr', type=float, default=1e-4)
-parser.add_argument('--sequence_length', type=int, default=150)
+parser.add_argument('--sequence_length', type=int, default=128)
 parser.add_argument('--batch_size', type=int, default=32)
 parser.add_argument('--model_load_dir', type=str, default='')
 parser.add_argument('--model_save_every_n_iter', type=int, default=1000)
@@ -78,7 +81,7 @@ args = parser.parse_args()
 args.emb_num = 50000
 args.n_classes = 2
 
-model = LSTMText(args.emb_num, args.emb_dim, hidden_size=args.hidden_size, n_classes=args.n_classes)
+model = LSTMText(args.emb_num, args.emb_dim, hidden_size=args.hidden_size, nfc=args.nfc, n_classes=args.n_classes)
 
 
 def get_train_config():
