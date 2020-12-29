@@ -119,8 +119,8 @@ def train(checkpoint):
 
         data, label = suffle_batch(test_data, test_labels, args.batch_size)
         g = {"correct": 0, "total": 0}
-        for i, (images, labels) in enumerate(zip(data, label)):
-            labels, logits = eval_job(images, labels)
+        for i, (texts, labels) in enumerate(zip(data, label)):
+            labels, logits = eval_job(texts, labels)
             acc(labels, logits, g)
 
         accuracy = g["correct"] * 100 / g["total"]
