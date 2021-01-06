@@ -1,8 +1,8 @@
 # oneflow_nlp_model
 
-In this repo, we supply several NLP models based on OneFlow, including:
+In this repo, we supply several NLP models and NLP ops based on OneFlow, including:
 
-* TextCNN
+* TextCNN, Bi-LSTM for text classification
 * RoBERT
 
 
