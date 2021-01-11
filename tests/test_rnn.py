@@ -8,7 +8,7 @@ import test_global_storage
 
 sys.path.append('..')
 
-from nlp_ops.rnn import rnn, SimpleRNNCell, LSTMCell, simple_rnn, lstm, bilstm
+from nlp_ops.rnn import rnn, SimpleRNNCell, LSTMCell, simple_rnn, lstm, bilstm, cached_lstm
 
 
 def watched_simple_rnn(inputs, units, return_sequences=False, initial_state=None):
@@ -164,9 +164,19 @@ class TestAllRNN(unittest.TestCase):
 
             return output
 
+        @flow.global_function('predict', get_test_config())
+        def inference_cached_lstm(sentence: tp.Numpy.Placeholder((32, 18, 64), dtype=flow.float32)
+                                  ) -> tp.Numpy:
+            output = cached_lstm(sentence, group_num=3, units=15, return_sequences=True)
+
+            return output
+
         sentence_in = np.random.uniform(-10, 10, (32, 18, 64)).astype(np.float32)
         output_0 = inference_simple_rnn(sentence_in)
         output_1 = inference_lstm(sentence_in)
         output_2 = inference_bilstm(sentence_in)
+        output_3 = inference_cached_lstm(sentence_in)
 
-        self.assertEqual(output_0.shape, output_1.shape, output_2.shape)
+        self.assertEqual(output_0.shape, output_1.shape)
+        self.assertEqual(output_0.shape, output_2.shape)
+        self.assertEqual(output_0.shape, output_3.shape)
